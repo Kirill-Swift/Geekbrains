@@ -1,0 +1,257 @@
+/* База данных заказов клиентов интернет магазина
+ * С ее помощью можно прододить аналитику качества ПВЗ, популярности товаров, частоты заказов в разные города,
+ * дальность доставки и тд*/
+
+
+DROP DATABASE IF EXISTS coursework;
+
+CREATE DATABASE IF NOT EXISTS coursework;
+
+USE coursework;
+
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
+id serial PRIMARY KEY, 
+name varchar(150) NOT NULL, 
+phone char(11) UNIQUE NOT NULL, 
+email varchar(150) UNIQUE NOT NULL
+);
+
+INSERT INTO users 
+VALUES
+(DEFAULT, "Virginia Davis", 89255545641, "dfge@dsda.re"),
+(DEFAULT, "Nigel Bell", 89254357890, "as@dsda.re"),
+(DEFAULT, "Angelica Bryan", 89252345432, "dsds@dsda.re"),
+(DEFAULT, "Azalia Armstrong", 89251236578, "dffdf@dsda.re"),
+(DEFAULT, "Damon Craig", 89254325643, "vddv@dsda.re"),
+(DEFAULT, "Travis Moody", 89251234321, "assa@dsda.re"),
+(DEFAULT, "Ulysses Pruitt", 89255658709, "dswrwg@dsda.re");
+
+DROP TABLE IF EXISTS provider;
+CREATE TABLE provider (
+id serial PRIMARY KEY, 
+name varchar(150) UNIQUE NOT NULL, 
+creation datetime DEFAULT current_timestamp 
+);
+
+INSERT INTO provider  
+VALUES
+(DEFAULT, "ООО принт", DEFAULT),
+(DEFAULT, "ИП зайка", DEFAULT),
+(DEFAULT, "карат", DEFAULT),
+(DEFAULT, "кедр", DEFAULT),
+(DEFAULT, "рога", DEFAULT),
+(DEFAULT, "копыта", DEFAULT),
+(DEFAULT, "ИП лес", DEFAULT);
+
+DROP TABLE IF EXISTS city_zone;
+CREATE TABLE city_zone (
+id serial PRIMARY KEY, 
+name varchar(150) UNIQUE NOT NULL, 
+zone_id bigint UNSIGNED NOT NULL 
+);
+
+INSERT INTO city_zone 
+VALUES
+(DEFAULT, "Москва", 1),
+(DEFAULT, "Питер", 2),
+(DEFAULT, "Казань", 3),
+(DEFAULT, "Видное", 1),
+(DEFAULT, "Луганск", 4),
+(DEFAULT, "Донецк", 4),
+(DEFAULT, "Нижний", 3),
+(DEFAULT, "Киев", 5),
+(DEFAULT, "Ростов", 4);
+
+CREATE TABLE products (
+id serial PRIMARY KEY, 
+name varchar(150) NOT NULL, 
+categories varchar(150) NOT NULL, 
+price bigint UNSIGNED NOT NULL,
+warehouse varchar(150) NOT NULL,
+provider_id bigint UNSIGNED NOT NULL,
+FOREIGN KEY (provider_id) REFERENCES provider (id),
+FOREIGN KEY (warehouse) REFERENCES city_zone (name)
+);
+
+INSERT INTO products  
+VALUES
+(DEFAULT, "фрукты", "еда", 43, "Москва", 1),
+(DEFAULT, "джинсы", "одежда", 234, "Питер", 2),
+(DEFAULT, "платье", "одежда", 323, "Казань", 2),
+(DEFAULT, "шкаф-купе", "мебель", 4342, "Москва", 6),
+(DEFAULT, "пылесос", "техника", 2311, "Киев", 4),
+(DEFAULT, "шуба", "одежда", 43421, "Киев", 2),
+(DEFAULT, "серьги", "ювелирка", 4421, "Москва", 5);
+
+CREATE TABLE IF NOT EXISTS points (
+id serial PRIMARY KEY, 
+name varchar(150) UNIQUE NOT NULL, 
+city varchar(150) NOT NULL,
+FOREIGN KEY (city) REFERENCES city_zone (name)
+);
+
+INSERT INTO points 
+VALUES
+(DEFAULT, "сапроново", "Москва"),
+(DEFAULT, "ПЛК", "Видное"),
+(DEFAULT, "рябина", "Луганск"),
+(DEFAULT, "ольха", "Нижний"),
+(DEFAULT, "березовая", "Ростов"),
+(DEFAULT, "зябликово", "Видное"),
+(DEFAULT, "питерская", "Донецк");
+
+CREATE TABLE IF NOT EXISTS orders (
+numbers_oder serial PRIMARY KEY, 
+product_id bigint UNSIGNED NOT NULL, 
+users_id bigint UNSIGNED NOT NULL, 
+quantity bigint UNSIGNED NOT NULL, 
+point_id bigint UNSIGNED NOT NULL,
+FOREIGN KEY (product_id) REFERENCES products (id),
+FOREIGN KEY (users_id) REFERENCES users (id),
+FOREIGN KEY (point_id) REFERENCES points (id)
+);
+
+INSERT INTO orders 
+VALUES
+(DEFAULT, 1, 2, 34, 2),
+(DEFAULT, 1, 3, 2, 2),
+(DEFAULT, 5, 3, 5, 3),
+(DEFAULT, 4, 4, 1, 6),
+(DEFAULT, 7, 1, 1, 1),
+(DEFAULT, 6, 1, 5, 3),
+(DEFAULT, 3, 6, 1, 2);
+
+CREATE TABLE IF NOT EXISTS stocks (
+id serial PRIMARY KEY, 
+product_id bigint UNSIGNED NOT NULL, 
+discount bigint UNSIGNED NOT NULL, 
+start_stock datetime NOT NULL, 
+end_stock datetime NOT NULL,
+FOREIGN KEY (product_id) REFERENCES products (id)
+);
+
+INSERT INTO stocks 
+VALUES
+(DEFAULT, 2, 50, "2022-02-11 18:24:58", "2022-04-12 18:24:58"),
+(DEFAULT, 3, 100, "2022-01-01 18:24:58", "2022-03-15 18:24:58"),
+(DEFAULT, 4, 120, "2022-01-22 18:24:58", "2022-06-08 18:24:58");
+
+CREATE TABLE IF NOT EXISTS redeemed_type (
+redeem_id serial PRIMARY KEY, 
+type_status varchar(128) NOT NULL
+);
+
+INSERT INTO redeemed_type 
+VALUES
+(1, "выкуплен"),
+(2, "отказ"),
+(3, "брак");
+
+CREATE TABLE IF NOT EXISTS redeemed (
+orders_id bigint UNSIGNED UNIQUE NOT NULL, 
+status_order bigint UNSIGNED DEFAULT 2, 
+date_status datetime DEFAULT current_timestamp, 
+FOREIGN KEY (orders_id) REFERENCES orders (numbers_oder),
+FOREIGN KEY (status_order) REFERENCES redeemed_type (redeem_id)
+);
+
+INSERT INTO redeemed 
+VALUES
+(1, 1, DEFAULT),
+(2, 2, DEFAULT),
+(3, 1, DEFAULT),
+(4, 1, DEFAULT),
+(7, 3, DEFAULT),
+(6, DEFAULT, DEFAULT),
+(5, DEFAULT, DEFAULT);
+
+CREATE TABLE IF NOT EXISTS likes_point (
+point_id bigint UNSIGNED NOT NULL, 
+users_id bigint UNSIGNED NOT NULL, 
+type_likes bool, 
+PRIMARY KEY (point_id, users_id),
+FOREIGN KEY (point_id) REFERENCES points (id),
+FOREIGN KEY (users_id) REFERENCES users (id)
+);
+
+INSERT INTO likes_point 
+VALUES
+(1, 1, 0),
+(2, 7, 1),
+(3, 1, 1),
+(5, 6, 1),
+(6, 4, 0),
+(1, 4, 1),
+(3, 3, 1);
+
+/*
+ * скрипты характерных выборок (включающие группировки, JOIN'ы, вложенные запросы)
+ * */
+
+-- определяемя сколько заказов сделали клиенты и кто
+SELECT count(users_id) AS "кол-во заказов", u.name FROM orders o JOIN users u ON o.users_id = u.id 
+GROUP BY users_id;
+
+-- в какине города клиетны делают заказы
+SELECT 
+(SELECT name FROM users u WHERE o.users_id = u.id) AS name,
+(SELECT city FROM points p2 WHERE p2.id = o.point_id) AS "Город"
+FROM orders o WHERE point_id IN
+(SELECT id FROM points p WHERE city IN 
+(SELECT name FROM city_zone cz WHERE zone_id = 1));
+
+/*
+ * представления (минимум 2)
+ * */
+
+-- определяем какие поставщики какой товар поствляют
+CREATE VIEW prod_provid AS 
+SELECT p.id, p.name, p2.name AS name_prov FROM products p JOIN provider p2 ON p.provider_id = p2.id;
+
+SELECT * FROM prod_provid
+ 
+-- выводим список бракованных товаров
+CREATE VIEW defect_product AS 
+SELECT p.name, rt.type_status FROM products p 
+JOIN orders o ON p.id = o.product_id 
+JOIN redeemed r ON o.numbers_oder = r.orders_id
+JOIN redeemed_type rt ON r.status_order = rt.redeem_id
+WHERE r.status_order = 3;
+
+SELECT * FROM defect_product 
+
+-- в каких зонах находятся продукты
+CREATE OR REPLACE VIEW products_zone AS 
+SELECT p.id, p.name, cz.zone_id FROM products p 
+JOIN city_zone cz ON p.warehouse = cz.name;
+
+-- в каких зонах находся ПВЗ
+CREATE OR REPLACE VIEW point_zone AS
+SELECT points.name, city_zone.zone_id FROM points 
+JOIN city_zone ON points.city = city_zone.name;
+
+/*
+ * Хранимая процедура / функция / триггер (на выбор, 1 шт.)
+ * */
+
+-- рекомендация на какой ПВЗ быстрее всего придет товар
+DROP PROCEDURE IF EXISTS rating_point;
+
+delimiter //
+
+CREATE PROCEDURE rating_point (IN products_near bigint UNSIGNED)
+BEGIN
+	SELECT pz2.name, pz.name AS point_name FROM products_zone pz2
+	JOIN point_zone pz ON pz2.zone_id = pz.zone_id
+	WHERE pz2.id = products_near;
+END//
+
+delimiter ;
+
+CALL rating_point (1)
+
+
+
+
+
